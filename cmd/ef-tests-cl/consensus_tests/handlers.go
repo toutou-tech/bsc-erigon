@@ -25,6 +25,7 @@ var (
 	caseRewardsAndPenalties          = "rewards_and_penalties"
 	caseSlashings                    = "slashings"
 	caseSlashingsReset               = "slashings_reset"
+	caseParticipationRecords         = "participation_record_updates"
 )
 
 // Operations cases
@@ -36,6 +37,8 @@ var (
 	caseDeposit          = "deposit"
 	caseVoluntaryExit    = "voluntary_exit"
 	caseSyncAggregate    = "sync_aggregate"
+	caseWithdrawal       = "withdrawals"
+	caseBlsChange        = "bls_to_execution_change"
 )
 
 // transitionCoreTest
@@ -47,6 +50,9 @@ var sanitySlots = "sanity/slots"
 
 // random
 var random = "random/random"
+
+// transitionCore
+var transitionCore = "transition/core"
 
 // Stays here bc debugging >:-(
 func placeholderTest() error {
@@ -67,6 +73,7 @@ var handlers map[string]testFunc = map[string]testFunc{
 	path.Join(epochProcessingDivision, caseRewardsAndPenalties):          rewardsAndPenaltiesTest,
 	path.Join(epochProcessingDivision, caseSlashings):                    slashingsTest,
 	path.Join(epochProcessingDivision, caseSlashingsReset):               slashingsResetTest,
+	path.Join(epochProcessingDivision, caseParticipationRecords):         recordsResetTest,
 	path.Join(operationsDivision, caseAttestation):                       operationAttestationHandler,
 	path.Join(operationsDivision, caseAttesterSlashing):                  operationAttesterSlashingHandler,
 	path.Join(operationsDivision, caseProposerSlashing):                  operationProposerSlashingHandler,
@@ -74,8 +81,11 @@ var handlers map[string]testFunc = map[string]testFunc{
 	path.Join(operationsDivision, caseDeposit):                           operationDepositHandler,
 	path.Join(operationsDivision, caseSyncAggregate):                     operationSyncAggregateHandler,
 	path.Join(operationsDivision, caseVoluntaryExit):                     operationVoluntaryExitHandler,
-	sanityBlocks: testSanityFunction,
-	sanitySlots:  testSanityFunctionSlot,
-	finality:     finalityTestFunction,
-	random:       testSanityFunction, // Same as sanity handler.
+	path.Join(operationsDivision, caseWithdrawal):                        operationWithdrawalHandler,
+	path.Join(operationsDivision, caseBlsChange):                         operationSignedBlsChangeHandler,
+	transitionCore: transitionTestFunction,
+	sanityBlocks:   testSanityFunction,
+	sanitySlots:    testSanityFunctionSlot,
+	finality:       finalityTestFunction,
+	random:         testSanityFunction, // Same as sanity handler.
 }
