@@ -3,18 +3,11 @@ name: Docker
 on:
   push:
     # Publish `v1.2.3` tags as releases.
-    branches: 
-      - devel
-      - blxdyx-patch-1
     tags:
       - v*
-  pull_request:
-    branches: 
-      - devel
-      - blxdyx-patch-1
 
 env:
-  IMAGE_NAME: bsc
+  IMAGE_NAME: bsc-erigon
   URL: https://github.com/node-real/bsc-erigon
 
 jobs:
