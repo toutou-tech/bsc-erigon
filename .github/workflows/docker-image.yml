@@ -8,6 +8,10 @@ on:
     branches:
       - update_docker
       - devel
+  pull_request:
+    branches:
+      - devel
+      - update_docker
 
 env:
   IMAGE_NAME: bsc-erigon
