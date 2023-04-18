@@ -126,7 +126,7 @@ func (api *PrivateDebugAPIImpl) AccountRange(ctx context.Context, blockNrOrHash 
 					return state.IteratorDump{}, err
 				}
 				if headerHash != (common.Hash{}) {
-					if header := rawdb.ReadHeader(tx, headerHash, blockNumber); header != nil {
+					if header := rawdb.ReadHeader(tx, headerHash, headerNumber); header != nil {
 						if chainConfig, err := api.chainConfig(tx); err == nil {
 							blockNumber = posa.GetFinalizedHeader(stagedsync.NewChainReaderImpl(chainConfig, tx, nil), header).Number.Uint64()
 						}
@@ -144,7 +144,7 @@ func (api *PrivateDebugAPIImpl) AccountRange(ctx context.Context, blockNrOrHash 
 					return state.IteratorDump{}, err
 				}
 				if headerHash != (common.Hash{}) {
-					if header := rawdb.ReadHeader(tx, headerHash, blockNumber); header != nil {
+					if header := rawdb.ReadHeader(tx, headerHash, headerNumber); header != nil {
 						if chainConfig, err := api.chainConfig(tx); err == nil {
 							blockNumber, _, err = posa.GetJustifiedNumberAndHash(stagedsync.NewChainReaderImpl(chainConfig, tx, nil), header)
 							if err != nil {
