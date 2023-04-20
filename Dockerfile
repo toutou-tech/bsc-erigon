@@ -90,18 +90,4 @@ EXPOSE 8545 \
        9090 \
        6060
 
-# https://github.com/opencontainers/image-spec/blob/main/annotations.md
-ARG BUILD_DATE
-ARG VCS_REF
-ARG VERSION
-LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.description="Erigon Ethereum Client" \
-      org.label-schema.name="Erigon" \
-      org.label-schema.schema-version="1.0" \
-      org.label-schema.url="https://torquem.ch" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/ledgerwatch/erigon.git" \
-      org.label-schema.vendor="Torquem" \
-      org.label-schema.version=$VERSION
-
 ENTRYPOINT ["erigon"]
