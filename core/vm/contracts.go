@@ -23,7 +23,7 @@ import (
 
 	"github.com/ledgerwatch/log/v3"
 	"github.com/minio/sha256-simd"
-	"github.com/prysmaticlabs/prysm/v3/crypto/bls"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
 
 	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/chain"
@@ -189,6 +189,7 @@ var PrecompiledContractsBoneh = map[libcommon.Address]PrecompiledContract{
 	libcommon.BytesToAddress([]byte{100}): &tmHeaderValidate{},
 	libcommon.BytesToAddress([]byte{101}): &iavlMerkleProofValidatePlanck{},
 	libcommon.BytesToAddress([]byte{102}): &blsSignatureVerify{},
+	libcommon.BytesToAddress([]byte{103}): &cometBFTLightBlockValidate{},
 }
 
 var (
