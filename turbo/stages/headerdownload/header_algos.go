@@ -859,7 +859,16 @@ func (hi *HeaderInserter) FeedHeaderPoW(db kv.StatelessRwTx, headerReader servic
 		return nil, nil
 	}
 
-	var parent *types.Header
+	// Load parent header
+	parent, err := headerReader.Header(context.Background(), db, header.ParentHash, blockHeight-1)
+	if err != nil {
+		return nil, err
+	}
+	if parent == nil {
+		// Fail on headers without parent
+		return nil, fmt.Errorf("could not find parent with hash %x and height %d for header %x %d", header.ParentHash, blockHeight-1, hash, blockHeight)
+	}
+
 	reorgFunc := func() (bool, error) {
 		if p, ok := engine.(consensus.PoSA); ok {
 			justifiedNumber, curJustifiedNumber := uint64(0), uint64(0)
@@ -874,15 +883,6 @@ func (hi *HeaderInserter) FeedHeaderPoW(db kv.StatelessRwTx, headerReader servic
 				}
 			}
 			if justifiedNumber == curJustifiedNumber {
-				// Load parent header
-				parent, err := headerReader.Header(context.Background(), db, header.ParentHash, blockHeight-1)
-				if err != nil {
-					return false, err
-				}
-				if parent == nil {
-					// Fail on headers without parent
-					return false, fmt.Errorf("could not find parent with hash %x and height %d for header %x %d", header.ParentHash, blockHeight-1, hash, blockHeight)
-				}
 				// Parent's total difficulty
 				parentTd, err := rawdb.ReadTd(db, header.ParentHash, blockHeight-1)
 				if err != nil || parentTd == nil {
