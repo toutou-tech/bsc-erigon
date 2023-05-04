@@ -1,8 +1,13 @@
 name: Docker
 
 on:
+  pull_request:
+    branches: 
+      - docker_image
   push:
     # Publish `v1.2.3` tags as releases.
+    branches: 
+      - docker_image
     tags:
       - v*
 
