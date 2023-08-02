@@ -111,3 +111,85 @@ func ApplyTransaction(config *chain.Config, blockHashFunc func(n uint64) libcomm
 
 	return applyTransaction(config, engine, gp, ibs, stateWriter, header, tx, usedGas, vmenv, cfg)
 }
+
+// applyTransactionWithResult attempts to apply a transaction to the given state database
+// and uses the input parameters for its environment. It returns the receipt
+// for the transaction, gas used and an error if the transaction failed,
+// indicating the block was invalid.
+func applyTransactionWithResult(config *chain.Config, engine consensus.EngineReader, gp *GasPool, ibs *state.IntraBlockState, stateWriter state.StateWriter, header *types.Header, tx types.Transaction, usedGas *uint64, evm vm.VMInterface, cfg vm.Config) (*types.Receipt, *ExecutionResult, error) {
+	rules := evm.ChainRules()
+	msg, err := tx.AsMessage(*types.MakeSigner(config, header.Number.Uint64()), header.BaseFee, rules)
+	if err != nil {
+		return nil, nil, err
+	}
+	msg.SetCheckNonce(!cfg.StatelessExec)
+
+	if msg.FeeCap().IsZero() && engine != nil {
+		// Only zero-gas transactions may be service ones
+		syscall := func(contract libcommon.Address, data []byte) ([]byte, error) {
+			return SysCallContract(contract, data, *config, ibs, header, engine, true /* constCall */, nil /*excessDataGas*/)
+		}
+		msg.SetIsFree(engine.IsServiceTransaction(msg.From(), syscall))
+	}
+
+	txContext := NewEVMTxContext(msg)
+	if cfg.TraceJumpDest {
+		txContext.TxHash = tx.Hash()
+	}
+
+	// Update the evm with the new transaction context.
+	evm.Reset(txContext, ibs)
+
+	result, err := ApplyMessage(evm, msg, gp, true /* refunds */, false /* gasBailout */)
+	if err != nil {
+		return nil, nil, err
+	}
+	// Update the state with pending changes
+	if err = ibs.FinalizeTx(rules, stateWriter); err != nil {
+		return nil, nil, err
+	}
+	*usedGas += result.UsedGas
+
+	// Set the receipt logs and create the bloom filter.
+	// based on the eip phase, we're passing whether the root touch-delete accounts.
+	var receipt *types.Receipt
+	if !cfg.NoReceipts {
+		// by the tx.
+		receipt = &types.Receipt{Type: tx.Type(), CumulativeGasUsed: *usedGas}
+		if result.Failed() {
+			receipt.Status = types.ReceiptStatusFailed
+		} else {
+			receipt.Status = types.ReceiptStatusSuccessful
+		}
+		receipt.TxHash = tx.Hash()
+		receipt.GasUsed = result.UsedGas
+		// if the transaction created a contract, store the creation address in the receipt.
+		if msg.To() == nil {
+			receipt.ContractAddress = crypto.CreateAddress(evm.TxContext().Origin, tx.GetNonce())
+		}
+		// Set the receipt logs and create a bloom for filtering
+		receipt.Logs = ibs.GetLogs(tx.Hash())
+		receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+		receipt.BlockNumber = header.Number
+		receipt.TransactionIndex = uint(ibs.TxIndex())
+	}
+
+	return receipt, result, err
+}
+
+// ApplyTransactionWithResult attempts to apply a transaction to the given state database
+// and uses the input parameters for its environment. It returns the receipt
+// for the transaction, gas used and an error if the transaction failed,
+// indicating the block was invalid.
+func ApplyTransactionWithResult(config *chain.Config, blockHashFunc func(n uint64) libcommon.Hash, engine consensus.EngineReader, author *libcommon.Address, gp *GasPool, ibs *state.IntraBlockState, stateWriter state.StateWriter, header *types.Header, tx types.Transaction, usedGas *uint64, cfg vm.Config, excessDataGas *big.Int) (*types.Receipt, *ExecutionResult, error) {
+	// Create a new context to be used in the EVM environment
+
+	// Add addresses to access list if applicable
+	// about the transaction and calling mechanisms.
+	cfg.SkipAnalysis = SkipAnalysis(config, header.Number.Uint64())
+
+	blockContext := NewEVMBlockContext(header, blockHashFunc, engine, author, excessDataGas)
+	vmenv := vm.NewEVM(blockContext, evmtypes.TxContext{}, ibs, config, cfg)
+
+	return applyTransactionWithResult(config, engine, gp, ibs, stateWriter, header, tx, usedGas, vmenv, cfg)
+}
