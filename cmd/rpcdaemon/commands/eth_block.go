@@ -277,9 +277,12 @@ func (api *APIImpl) CallBundle1(ctx context.Context, args CallBundleArgs) (map[s
 		return nil, fmt.Errorf("block %d(%x) not found", stateBlockNumber, hash)
 	}
 
-	if err := args.StateOverrides.Override(ibs); err != nil {
-		return nil, err
+	if args.StateOverrides != nil {
+		if err := args.StateOverrides.Override(ibs); err != nil {
+			return nil, err
+		}
 	}
+
 	blockNumber := args.BlockNumber
 
 	timestamp := parent.Time + 1
