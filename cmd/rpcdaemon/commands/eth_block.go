@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/log"
 	"golang.org/x/crypto/sha3"
 	"math/big"
 	"time"
@@ -11,8 +12,6 @@ import (
 	"github.com/ledgerwatch/erigon-lib/common"
 	"github.com/ledgerwatch/erigon-lib/common/hexutility"
 	"github.com/ledgerwatch/erigon-lib/kv"
-	"github.com/ledgerwatch/log/v3"
-
 	"github.com/ledgerwatch/erigon/cl/clparams"
 	"github.com/ledgerwatch/erigon/common/hexutil"
 	"github.com/ledgerwatch/erigon/common/math"
@@ -216,7 +215,7 @@ type CallBundleArgs struct {
 // a past block.
 // The sender is responsible for signing the transactions and using the correct
 // nonce and ensuring validity
-func (api *APIImpl) CallBundle1(ctx context.Context, args CallBundleArgs) (map[string]interface{}, error) {
+func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs) (map[string]interface{}, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -277,6 +276,7 @@ func (api *APIImpl) CallBundle1(ctx context.Context, args CallBundleArgs) (map[s
 		return nil, fmt.Errorf("block %d(%x) not found", stateBlockNumber, hash)
 	}
 
+	fmt.Printf("StateOverrides %v\n", args.StateOverrides)
 	if args.StateOverrides != nil {
 		if err := args.StateOverrides.Override(ibs); err != nil {
 			return nil, err
@@ -377,7 +377,7 @@ func (api *APIImpl) CallBundle1(ctx context.Context, args CallBundleArgs) (map[s
 		gasFeesTx := new(big.Int).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GetPrice().ToBig())
 		gasFees.Add(gasFees, gasFeesTx)
 		bundleHash.Write(tx.Hash().Bytes())
-		if result != nil {
+		if result.Err != nil {
 			jsonResult["error"] = result.Err.Error()
 			revert := result.Revert()
 			if len(revert) > 0 {
