@@ -276,7 +276,6 @@ func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs)
 		return nil, fmt.Errorf("block %d(%x) not found", stateBlockNumber, hash)
 	}
 
-	fmt.Printf("StateOverrides %v\n", args.StateOverrides)
 	if args.StateOverrides != nil {
 		if err := args.StateOverrides.Override(ibs); err != nil {
 			return nil, err
