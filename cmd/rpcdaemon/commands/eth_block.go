@@ -16,6 +16,7 @@ import (
 	"github.com/ledgerwatch/erigon/cl/clparams"
 	"github.com/ledgerwatch/erigon/common/hexutil"
 	"github.com/ledgerwatch/erigon/common/math"
+	"github.com/ledgerwatch/erigon/consensus/misc"
 	"github.com/ledgerwatch/erigon/core"
 	"github.com/ledgerwatch/erigon/core/rawdb"
 	"github.com/ledgerwatch/erigon/core/state"
@@ -301,6 +302,12 @@ func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs)
 	if args.GasLimit != nil {
 		gasLimit = *args.GasLimit
 	}
+
+	var baseFee *big.Int
+	if chainConfig.IsLondon(uint64(args.BlockNumber.Int64())) {
+		baseFee = misc.CalcBaseFee(chainConfig, parent)
+	}
+	
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Number:     big.NewInt(int64(blockNumber)),
@@ -308,6 +315,7 @@ func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs)
 		Time:       timestamp,
 		Difficulty: difficulty,
 		Coinbase:   coinbase,
+		BaseFee:    baseFee,
 	}
 
 	signer := types.MakeSigner(chainConfig, uint64(blockNumber))
