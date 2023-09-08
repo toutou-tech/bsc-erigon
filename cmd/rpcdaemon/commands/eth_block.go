@@ -373,7 +373,8 @@ func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs)
 			"toAddress":   to,
 		}
 		totalGasUsed += receipt.GasUsed
-		gasFeesTx := new(big.Int).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GetPrice().ToBig())
+
+		gasFeesTx := new(big.Int).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GetEffectiveGasTip(header.BaseFee))
 		gasFees.Add(gasFees, gasFeesTx)
 		bundleHash.Write(tx.Hash().Bytes())
 		if result.Err != nil {
