@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/holiman/uint256"
 	"golang.org/x/crypto/sha3"
 	"math/big"
 	"time"
@@ -373,8 +374,8 @@ func (api *APIImpl) CallBundleWithArgs(ctx context.Context, args CallBundleArgs)
 			"toAddress":   to,
 		}
 		totalGasUsed += receipt.GasUsed
-
-		gasFeesTx := new(big.Int).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GetEffectiveGasTip(header.BaseFee))
+		baseFee, _ := uint256.FromBig(header.BaseFee)
+		gasFeesTx := new(big.Int).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GetEffectiveGasTip(baseFee).ToBig())
 		gasFees.Add(gasFees, gasFeesTx)
 		bundleHash.Write(tx.Hash().Bytes())
 		if result.Err != nil {
